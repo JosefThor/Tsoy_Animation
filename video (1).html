@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Animation Tsoy</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- ============================================================
+     КАК ВСТАВИТЬ СВОЁ ВИДЕО (коротко)
+
+     1. Найди блок с нужным названием — например «Reels и Shorts».
+     2. Внутри него есть рамка <div class="fr"> ... </div>
+     3. Сотри подсказку внутри рамки и вставь ОДИН из трёх вариантов.
+
+     ВАРИАНТ A — ролик с VK (лучший для зрителей из России)
+     <iframe src="СЮДА_ССЫЛКУ_ИЗ_ВК" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+     Где взять ссылку: VK → ролик → Поделиться → Экспортировать.
+     Нужна ссылка вида: https://vk.com/video_ext.php?oid=...&id=...
+
+     ВАРИАНТ B — ролик с YouTube
+     <iframe src="https://www.youtube.com/embed/ID_РОЛИКА" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+     ID — это хвост ссылки после v=   пример: youtube.com/watch?v=abc123 → abc123
+
+     ВАРИАНТ C — свой файл .mp4 рядом с сайтом
+     <video src="videos/имя-файла.mp4" muted loop playsinline controls></video>
+     Файл положи в папку videos/ рядом с этим html.
+
+     Не вставляй два варианта сразу в одну рамку.
+     ============================================================ -->
+
+<style>
+/* Цвета сайта. Можно поменять:
+   --red   = акцентный красный (кнопки, обводка)
+   --ink   = почти чёрный (блок рекламы и процесс)
+   --paper = светлый фон страницы
+   --sak   = розовый фон блока приглашений */
+:root{
+  --ink:#232323;
+  --red:#d94b45;
+  --paper:#f7f5f2;
+  --txt:#232323;
+  --sak:#f6dcd7;
+}
+
+/* Если у человека тёмная тема в телефоне — фон страницы тоже темнеет */
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme=light]){--paper:#1b1a19;--txt:#f1eeea}
+}
+
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+*{box-sizing:border-box;margin:0}
+body{font:400 17px/1.55 Manrope,system-ui,sans-serif;background:var(--paper);color:var(--txt)}
+
+/* Двуязычность: тег <r> — русский текст, тег <e> — английский.
+   Кнопка EN в меню прячет один язык и показывает другой. */
+html[lang=ru] e,html[lang=en] r{display:none}
+
+/* Заголовки — жирный шрифт Unbounded */
+h1,h2,h3,.d{font-family:Unbounded,Impact,sans-serif}
+a{color:inherit}
+section{padding:96px 6vw}
+.w{max-width:1120px;margin:auto}
+
+/* ===== ШАПКА САЙТА (меню сверху) ===== */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;display:flex;justify-content:space-between;align-items:center;padding:8px 6vw;background:var(--paper);border-bottom:1px solid #8884}
+header img{height:52px;display:block;width:auto;max-width:min(280px,46vw);object-fit:contain}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) header img{background:#f7f5f2;padding:4px 10px;border-radius:8px}}
+nav{display:flex;gap:22px;align-items:center;font-size:15px}
+nav a{text-decoration:none}
+nav a:hover{color:var(--red)}
+#lg{font:600 14px Manrope;border:1.5px solid currentColor;background:none;color:inherit;border-radius:99px;padding:6px 14px;cursor:pointer}
+:focus-visible{outline:3px solid var(--red);outline-offset:3px}
+@media(max-width:760px){nav a{display:none}} /* на телефоне пункты меню прячутся, остаётся лого и EN */
+
+/* ===== ПЕРВЫЙ ЭКРАН ===== */
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:30px;align-items:center;min-height:86vh}
+h1{font-size:clamp(34px,6vw,76px);line-height:1.02;font-weight:900;letter-spacing:-.02em}
+h1 s{text-decoration:none;color:var(--red);display:block}
+.hero p{max-width:34em;margin:26px 0;font-size:19px}
+.btn{display:inline-block;background:var(--red);color:#fff;text-decoration:none;font:700 15px Unbounded;padding:16px 28px;border-radius:99px;margin-right:10px}
+.btn.o{background:none;color:inherit;border:2px solid currentColor}
+
+/* Лого справа + ползунок таймлайна поверх него */
+.ens{position:relative;max-width:460px;margin:auto;width:100%;aspect-ratio:1.25/1}
+.ens .mark{width:100%;height:auto;display:block;position:relative;z-index:1}
+.ens .scan{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+#ph{animation:sc 7s ease-in-out 0s infinite alternate}
+@keyframes sc{from{transform:translateX(-118px)}to{transform:translateX(118px)}}
+#tc{position:absolute;left:50%;bottom:2%;transform:translateX(-50%);font:700 13px ui-monospace,monospace;color:#fff;background:var(--red);padding:2px 10px;border-radius:4px;z-index:3}
+
+/* ===== РАМКИ ПОД ВИДЕО =====
+   .fr — это «экран», куда ты вставляешь iframe или video.
+   Пока внутри пусто — виден белый треугольник «play».
+   Как только внутри появляется видео, треугольник сам пропадает. */
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;margin-top:44px}
+.fr{aspect-ratio:16/9;position:relative;overflow:hidden;display:grid;place-items:center;margin-bottom:14px;background:#111}
+.fr:after{content:"";width:0;height:0;border-left:26px solid #fff;border-top:16px solid transparent;border-bottom:16px solid transparent;filter:drop-shadow(0 2px 8px #0008);position:relative;z-index:2}
+.fr:has(video):after,
+.fr:has(iframe):after{display:none}
+.fr video,.fr iframe{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;border:0;z-index:1;
+}
+.hint{position:relative;z-index:1;padding:12px 16px;font-size:13px;line-height:1.35;color:#fff;text-align:center;max-width:90%;opacity:.9}
+.k h3{font-size:19px;margin-bottom:6px}
+.k p{font-size:15px;opacity:.85}
+h2{font-size:clamp(28px,4.4vw,54px);line-height:1.05;font-weight:900;max-width:14em}
+.lead{max-width:36em;margin-top:18px;font-size:18px}
+
+/* Блок РЕКЛАМА — тёмный, скошенный верх, рамки чуть под углом */
+#ads{background:var(--ink);color:#fff;clip-path:polygon(0 40px,100% 0,100% 100%,0 100%);padding-top:130px}
+#ads .fr{background:linear-gradient(115deg,#d94b45 0 34%,#2e2e2e 34% 100%);transform:skewX(-6deg);border-left:6px solid #fff}
+#ads .fr.b{background:linear-gradient(295deg,#fff 0 22%,#d94b45 22% 60%,#111 60%)}
+#ads .fr video,#ads .fr iframe{transform:skewX(6deg) scale(1.08)} /* чтобы картинка в скошенной рамке не казалась кривой */
+
+/* Блок ПРИГЛАШЕНИЯ — светло-розовый, мягкие круги */
+#wish{background:var(--sak);color:#232323;position:relative;overflow:hidden}
+#wish:before,#wish:after{content:"";position:absolute;border-radius:50%;border:2px solid var(--red);opacity:.35}
+#wish:before{width:340px;height:340px;right:-90px;top:-100px}
+#wish:after{width:180px;height:180px;left:-50px;bottom:60px;background:var(--red);opacity:.12}
+#wish .fr{border-radius:200px 200px 24px 24px;background:radial-gradient(circle at 50% 78%,#ffd9a0 0 12%,#d94b45 13% 40%,#f0a9a0 41%)}
+#wish .fr.b{border-radius:24px 24px 200px 200px;background:radial-gradient(circle at 30% 30%,#fff 0 10%,transparent 11%),linear-gradient(#f0a9a0,#d94b45)}
+
+/* Блок ТЕАТР — «занавес» */
+#stage{background:radial-gradient(ellipse 60% 55% at 50% 0,#ffd9a044,transparent 70%),repeating-linear-gradient(90deg,#5a1414 0 34px,#7d1f1f 34px 68px,#4a1010 68px 90px);color:#f5e9dc;box-shadow:inset 0 30px 40px -10px #000c,inset 0 -30px 40px -10px #000c}
+#stage h2{font-weight:400;letter-spacing:.02em}
+#stage .fr{aspect-ratio:2.39/1;background:radial-gradient(ellipse 30% 90% at 50% 100%,#ffe6b855,transparent),#0c0808;border:1px solid #f5e9dc55;box-shadow:0 0 0 8px #0c0808}
+
+/* Блок ЦЕНЫ */
+.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:26px;margin-top:40px}
+.pc{border:2px solid var(--txt);padding:26px;border-radius:6px}
+.pc>h3{font-size:18px;margin-bottom:6px;border-bottom:4px solid var(--c);display:inline-block}
+.pc .row{padding:18px 0;border-top:1px dashed #8886}
+.pc .row:first-of-type{margin-top:14px}
+.pr{font:900 26px Unbounded}
+.pc b{display:block;margin:2px 0}
+.pc small{display:block;font-size:14px;opacity:.85}
+.inc{margin-top:34px;padding:22px 26px;background:var(--ink);color:#fff;border-radius:6px;font-size:15px}
+
+/* Блок ПРОЦЕСС — линия заполняется при прокрутке */
+#pipe{background:var(--ink);color:#fff}
+.pl{list-style:none;padding:0;display:grid;grid-template-columns:repeat(6,1fr);gap:16px;margin-top:56px;position:relative}
+.pl:before{content:"";position:absolute;left:0;right:0;top:11px;height:3px;background:linear-gradient(90deg,var(--red) 0 var(--p,0%),#fff3 var(--p,0%))}
+.pl li{position:relative;padding-top:38px;font-size:14px}
+.pl li:before{content:"";position:absolute;top:0;left:0;width:24px;height:24px;border-radius:50%;background:var(--ink);border:3px solid var(--red)}
+.pl b{display:block;font:700 15px Unbounded;margin-bottom:6px}
+.pl i{display:block;margin-top:6px;color:#f0a9a0;font-style:normal}
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr}
+  .pl{grid-template-columns:1fr;gap:26px}
+  .pl:before{left:11px;right:auto;width:3px;top:0;bottom:0;height:auto}
+  .pl li{padding:0 0 0 46px}
+}
+
+/* Блок КОНТАКТЫ — красная подложка, круглые кнопки */
+#ct{background:var(--red);color:#fff;text-align:center;padding:90px 6vw 60px}
+#ct h2{margin:auto}
+.ck{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:36px}
+.ck a{background:var(--ink);color:#fff;text-decoration:none;font:700 16px Unbounded;padding:18px 30px;border-radius:99px}
+.ck a:hover{background:#fff;color:var(--ink)}
+footer{margin-top:50px;font-size:14px;opacity:.85}
+@media(prefers-reduced-motion:reduce){#ph{animation:none}}
+</style>
+</head>
+<body>
+
+<!-- ===================== ШАПКА =====================
+     Лого: файл logo-full.png должен лежать РЯДОМ с этим html.
+     Пункты меню ведут к блокам ниже (#ads, #wish, #stage…).
+     Кнопка EN переключает язык. Тексты сайта идут парами:
+       <r>русский</r>   <e>english</e>
+     Меняешь русский — не забудь английский, если нужен перевод. -->
+<header>
+  <a href="#top"><img src="logo-full.png" alt="Animation Tsoy"></a>
+  <nav>
+    <a href="#ads"><r>Реклама</r><e>Ads</e></a>
+    <a href="#wish"><r>Поздравления</r><e>Greetings</e></a>
+    <a href="#stage"><r>Театр</r><e>Theatre</e></a>
+    <a href="#price"><r>Цены</r><e>Prices</e></a>
+    <a href="#pipe"><r>Процесс</r><e>Process</e></a>
+    <button id="lg" aria-label="Language">EN</button>
+  </nav>
+</header>
+
+<!-- ===================== ПЕРВЫЙ ЭКРАН =====================
+     Здесь главный слоган и кнопки.
+     Картинка справа — logo-mark.png (только знак без надписи).
+     Красный ползунок и таймкод — украшение, не трогай, если не нужно. -->
+<section id="top">
+  <div class="w hero">
+    <div>
+      <h1>
+        <r>Я не просто монтирую.<s>Я режиссирую ролик.</s></r>
+        <e>I don’t just edit.<s>I direct the film.</s></e>
+      </h1>
+      <p>
+        <r>Я выстраиваю ролик как маленькое кино: придумываю идею, продумываю каждый кадр и ритм, чтобы зритель досмотрел до конца и запомнил ваше сообщение. От первой идеи до готового файла всё в одних руках.</r>
+        <e>I build every video like a short film: the idea, each shot and the rhythm are planned so viewers watch to the end and remember your message. From first idea to final file, it all stays in one pair of hands.</e>
+      </p>
+      <a class="btn" href="#ct"><r>Обсудить ролик</r><e>Discuss your video</e></a>
+      <a class="btn o" href="#price"><r>Цены</r><e>Prices</e></a>
+    </div>
+    <div class="ens">
+      <img class="mark" src="logo-mark.png" alt="Animation Tsoy">
+      <svg class="scan" viewBox="0 0 400 320" aria-hidden="true">
+        <g id="ph">
+          <path d="M200 18V302" stroke="#d94b45" stroke-width="3"/>
+          <path d="M190 12h20l-10 14z" fill="#d94b45"/>
+        </g>
+      </svg>
+      <div id="tc">00:00:00:00</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== РЕКЛАМА ===================== -->
+<section id="ads">
+  <div class="w">
+    <h2><r>Реклама, которую досматривают</r><e>Ads people watch to the end</e></h2>
+    <p class="lead">
+      <r>Динамичная графика для товаров, сервисов и брендов: ролики для соцсетей, сайтов, экранов и презентаций. Идея, сценарий и монтаж в одних руках.</r>
+      <e>Motion graphics for products, services and brands: videos for social media, websites, screens and pitches. Idea, script and edit under one roof.</e>
+    </p>
+    <div class="g">
+
+      <!-- КАРТОЧКА 1. Reels / Shorts
+           Сотри строку с class="hint" и вставь iframe или video внутрь div.fr -->
+      <div class="k">
+        <div class="fr">
+          <!-- ▼ СЮДА ВСТАВЬ РОЛИК (один вариант) ▼
+          <iframe src="https://vk.com/video_ext.php?oid=XXXX&id=YYYY&hd=2" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+          -->
+          <div class="hint">Сюда ролик: Reels / Shorts<br>Сотри эту надпись и вставь код видео</div>
+        </div>
+        <h3><r>Reels и Shorts за 15–30 секунд</r><e>15–30 s Reels and Shorts</e></h3>
+        <p><r>Вертикальная анимация с ритмом под музыку: зацепка в первые 2 секунды, один посыл, призыв к действию.</r><e>Vertical animation cut to the beat: a hook in the first 2 seconds, one message, one call to action.</e></p>
+      </div>
+
+      <!-- КАРТОЧКА 2. Продукт в 3D -->
+      <div class="k">
+        <div class="fr b">
+          <!-- ▼ СЮДА ВСТАВЬ РОЛИК: продуктовый 3D ▼
+          <iframe src="https://vk.com/video_ext.php?oid=XXXX&id=YYYY&hd=2" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+          -->
+          <div class="hint">Сюда ролик: продукт 3D<br>Сотри эту надпись и вставь код видео</div>
+        </div>
+        <h3><r>Продуктовый ролик с 3D</r><e>3D product film</e></h3>
+        <p><r>Товар в 3D: вращение, детали, характерная подача. Подходит для маркетплейсов и лендингов.</r><e>Your product in 3D: rotation, details, a signature look. Made for marketplaces and landing pages.</e></p>
+      </div>
+
+      <!-- КАРТОЧКА 3. Объясняющий ролик -->
+      <div class="k">
+        <div class="fr">
+          <!-- ▼ СЮДА ВСТАВЬ РОЛИК: explainer ▼
+          <iframe src="https://vk.com/video_ext.php?oid=XXXX&id=YYYY&hd=2" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+          -->
+          <div class="hint">Сюда ролик: объясняющий<br>Сотри эту надпись и вставь код видео</div>
+        </div>
+        <h3><r>Объясняющий ролик</r><e>Explainer video</e></h3>
+        <p><r>Сложное просто: инфографика, иконки и диктор. Один ролик заменяет длинную презентацию.</r><e>Complex made simple: infographics, icons and voice-over. One video replaces a long pitch deck.</e></p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ПРИГЛАШЕНИЯ И ПОЗДРАВЛЕНИЯ =====================
+     Этот блок специально светлее и «мягче», чем реклама. -->
+<section id="wish">
+  <div class="w">
+    <h2><r>Поздравления и приглашения с настроением</r><e>Greetings and invitations with a mood</e></h2>
+    <p class="lead">
+      <r>Свадьба, юбилей, день рождения, корпоратив. Анимированное приглашение или поздравление с вашими именами, фото и голосом. Его хочется пересылать друзьям.</r>
+      <e>Weddings, anniversaries, birthdays, corporate parties. An animated invitation or greeting with your names, photos and voice. Guests will want to forward it.</e>
+    </p>
+    <div class="g">
+
+      <!-- КАРТОЧКА 4. Приглашение -->
+      <div class="k">
+        <div class="fr">
+          <!-- ▼ СЮДА ВСТАВЬ РОЛИК: приглашение ▼
+          <iframe src="https://vk.com/video_ext.php?oid=XXXX&id=YYYY&hd=2" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+          -->
+          <div class="hint">Сюда ролик: приглашение<br>Сотри эту надпись и вставь код видео</div>
+        </div>
+        <h3><r>Анимированное приглашение</r><e>Animated invitation</e></h3>
+        <p><r>Дата, место и дресс-код в красивой истории на 20–40 секунд. Отправляется в мессенджер одним файлом.</r><e>Date, venue and dress code in a 20–40 s story. Sent to any messenger as a single file.</e></p>
+      </div>
+
+      <!-- КАРТОЧКА 5. Поздравление -->
+      <div class="k">
+        <div class="fr b">
+          <!-- ▼ СЮДА ВСТАВЬ РОЛИК: поздравление ▼
+          <iframe src="https://vk.com/video_ext.php?oid=XXXX&id=YYYY&hd=2" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+          -->
+          <div class="hint">Сюда ролик: поздравление<br>Сотри эту надпись и вставь код видео</div>
+        </div>
+        <h3><r>Видеопоздравление</r><e>Video greeting</e></h3>
+        <p><r>Ваши фото и слова превращаются в короткий фильм с музыкой. Юбилей, 8 Марта, подарок родителям.</r><e>Your photos and words become a short film with music. Anniversaries, gifts for parents.</e></p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ТЕАТР / СЦЕНА ===================== -->
+<section id="stage">
+  <div class="w">
+    <h2><r>Видео для сцены: спектакль, где экран играет</r><e>Video for the stage: a screen that performs</e></h2>
+    <p class="lead">
+      <r>Задники, проекции и переходы между сценами для спектаклей, концертов и школьных постановок. Читаю пьесу, работаю с режиссёром и делаю видео частью действия.</r>
+      <e>Backdrops, projections and scene transitions for plays, concerts and school shows. I read the script, work with the director and make video part of the action.</e>
+    </p>
+    <div class="g">
+
+      <!-- КАРТОЧКА 6. Проекция -->
+      <div class="k">
+        <div class="fr">
+          <!-- ▼ СЮДА ВСТАВЬ РОЛИК: проекция-декорация ▼
+          <iframe src="https://vk.com/video_ext.php?oid=XXXX&id=YYYY&hd=2" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+          -->
+          <div class="hint">Сюда ролик: проекция<br>Сотри эту надпись и вставь код видео</div>
+        </div>
+        <h3><r>Проекция-декорация</r><e>Projection set design</e></h3>
+        <p><r>Лес, город или космос на весь задник. Зацикленная анимация под размер вашего экрана.</r><e>A forest, a city or space across the whole backdrop. Looping animation sized to your screen.</e></p>
+      </div>
+
+      <!-- КАРТОЧКА 7. Спектакль под ключ -->
+      <div class="k">
+        <div class="fr">
+          <!-- ▼ СЮДА ВСТАВЬ РОЛИК: спектакль ▼
+          <iframe src="https://vk.com/video_ext.php?oid=XXXX&id=YYYY&hd=2" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
+          -->
+          <div class="hint">Сюда ролик: спектакль<br>Сотри эту надпись и вставь код видео</div>
+        </div>
+        <h3><r>Спектакль под ключ</r><e>Full-show package</e></h3>
+        <p><r>Единый визуальный стиль для всех сцен: заставка, переходы, титры и поклон.</r><e>One visual style for every scene: opening, transitions, credits and curtain call.</e></p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ЦЕНЫ =====================
+     Чтобы поменять цену — правь число внутри <div class="pr">15 000 ₽</div>
+     Чтобы поменять состав услуги — правь текст в <b> и <small>.
+     Цвет полоски под названием колонки задаёт style="--c:#цвет" -->
+<section id="price">
+  <div class="w">
+    <h2><r>Цены: что входит и за что вы платите</r><e>Prices: what is included</e></h2>
+    <p class="lead">
+      <r>Цена зависит от длины, сложности и срочности. Ниже стартовые цены. Точную назову за день после короткого брифа.</r>
+      <e>Price depends on length, complexity and rush. These are starting prices. I quote the exact one within a day of a short brief.</e>
+    </p>
+    <div class="pg">
+
+      <div class="pc" style="--c:#d94b45">
+        <h3><r>Реклама</r><e>Ads</e></h3>
+        <div class="row">
+          <div class="pr">15 000 ₽</div>
+          <b><r>Reels / Shorts до 20 сек</r><e>Reels / Shorts up to 20 s</e></b>
+          <small><r>Сценарий, графика, музыка, вертикальный формат, 2 круга правок. Срок 3–5 дней. От вас: логотип, текст, фото.</r><e>Script, graphics, music, vertical format, 2 revision rounds. 3–5 days. From you: logo, text, photos.</e></small>
+        </div>
+        <div class="row">
+          <div class="pr">35 000 ₽</div>
+          <b><r>Ролик 30–45 сек с 3D</r><e>30–45 s film with 3D</e></b>
+          <small><r>Раскадровка, 3D-модель товара, анимация, озвучка, 2 формата (16:9 и 9:16). Срок 7–10 дней.</r><e>Storyboard, 3D product model, animation, voice-over, two formats (16:9 and 9:16). 7–10 days.</e></small>
+        </div>
+        <div class="row">
+          <div class="pr">60 000 ₽</div>
+          <b><r>Объясняющий ролик до 90 сек</r><e>Explainer up to 90 s</e></b>
+          <small><r>Сценарий, стиль, инфографика, диктор, титры и версии для сайта и соцсетей. Срок 10–14 дней.</r><e>Script, style, infographics, narrator, subtitles, cuts for web and social. 10–14 days.</e></small>
+        </div>
+      </div>
+
+      <div class="pc" style="--c:#f0a9a0">
+        <h3><r>Поздравления и приглашения</r><e>Greetings and invitations</e></h3>
+        <div class="row">
+          <div class="pr">4 000 ₽</div>
+          <b><r>Видеоприглашение 20–30 сек</r><e>Video invitation 20–30 s</e></b>
+          <small><r>Авторский шаблон под вас: имена, дата, место, музыка. Срок 2–3 дня. 1 круг правок.</r><e>Custom template with your names, date, venue and music. 2–3 days. 1 revision round.</e></small>
+        </div>
+        <div class="row">
+          <div class="pr">8 000 ₽</div>
+          <b><r>Видеопоздравление до 2 мин</r><e>Video greeting up to 2 min</e></b>
+          <small><r>До 30 ваших фото и видео, монтаж под музыку, титры, 2 круга правок. Срок 4–6 дней.</r><e>Up to 30 of your photos and clips, edit to music, titles, 2 revision rounds. 4–6 days.</e></small>
+        </div>
+      </div>
+
+      <div class="pc" style="--c:#7d1f1f">
+        <h3><r>Театр и сцена</r><e>Theatre and stage</e></h3>
+        <div class="row">
+          <div class="pr">12 000 ₽</div>
+          <b><r>Видео для одной сцены</r><e>Video for one scene</e></b>
+          <small><r>Проекция под ваш экран, цикл или по таймингу, файл для проектора. Срок 5–7 дней.</r><e>Projection sized to your screen, loop or timed, projector-ready file. 5–7 days.</e></small>
+        </div>
+        <div class="row">
+          <div class="pr">60 000 ₽</div>
+          <b><r>Оформление спектакля, 5–8 сцен</r><e>Full show, 5–8 scenes</e></b>
+          <small><r>Единый стиль, заставка, переходы, титры, участие в репетиции, правки после прогона. Срок 3–5 недель.</r><e>Unified style, opening, transitions, credits, a rehearsal visit, fixes after the run-through. 3–5 weeks.</e></small>
+        </div>
+      </div>
+
+    </div>
+    <div class="inc">
+      <r>Во всех ценах: исходный 4K-файл и версия для соцсетей, права на использование ролика, музыка с лицензией. Дополнительный круг правок: +10%. Срочно за 48 часов: +30%.</r>
+      <e>Every price includes: 4K master and social version, usage rights, licensed music. Extra revision round: +10%. 48-hour rush: +30%.</e>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== КАК ИДЁТ РАБОТА ===================== -->
+<section id="pipe">
+  <div class="w">
+    <h2><r>Как мы делаем ролик</r><e>How we make your video</e></h2>
+    <ol class="pl">
+      <li><b><r>Бриф</r><e>Brief</e></b><r>Созвон 15 минут: задача, аудитория, сроки.</r><e>15-min call: goal, audience, deadline.</e><i>1 <r>день</r><e>day</e></i></li>
+      <li><b><r>Сценарий</r><e>Script</e></b><r>Идея и текст ролика. Вы утверждаете.</r><e>Idea and script. You approve.</e><i>1–2 <r>дня</r><e>days</e></i></li>
+      <li><b><r>Стиль</r><e>Style</e></b><r>Раскадровка и 2–3 кадра будущего вида.</r><e>Storyboard and 2–3 look frames.</e><i>2–3 <r>дня</r><e>days</e></i></li>
+      <li><b><r>Анимация</r><e>Animation</e></b><r>Оживляю графику: движение, 3D, эффекты.</r><e>Bringing graphics to life: motion, 3D, effects.</e><i>3–7 <r>дней</r><e>days</e></i></li>
+      <li><b><r>Звук и цвет</r><e>Sound and colour</e></b><r>Музыка, озвучка, цветокоррекция.</r><e>Music, voice-over, colour grade.</e><i>1–2 <r>дня</r><e>days</e></i></li>
+      <li><b><r>Сдача</r><e>Delivery</e></b><r>Правки и файлы во всех форматах.</r><e>Revisions and all file formats.</e><i>1 <r>день</r><e>day</e></i></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ===================== КОНТАКТЫ =====================
+     Меняй только то, что внутри href="..."
+     Telegram: https://t.me/твой_ник
+     VK:       ссылка на группу или страницу
+     Телефон:  tel:+7XXXXXXXXXX   (без пробелов и скобок)
+     Почта:    mailto:имя@почта.ru -->
+<section id="ct">
+  <div class="w">
+    <h2><r>Расскажите, какой ролик вам нужен</r><e>Tell me what video you need</e></h2>
+    <p class="lead" style="margin-inline:auto">
+      <r>Отвечаю в течение дня и называю точную цену.</r>
+      <e>I reply within a day with an exact quote.</e>
+    </p>
+    <div class="ck">
+      <a href="https://t.me/Animator_Tsoy">Telegram</a>
+      <a href="https://vk.ru/club228417228">VK</a>
+      <a href="tel:+79962801250">Телефон</a>
+      <a href="mailto:josoef-thor@ya.ru">Почта</a>
+    </div>
+    <footer>© Animation Tsoy</footer>
+  </div>
+</section>
+
+<!-- Скрипты: язык, таймкод на лого, линия процесса при прокрутке.
+     Обычному редактированию сайта они не мешают — можно не трогать. -->
+<script>
+var h=document.documentElement,b=document.getElementById('lg');
+function s(l){h.lang=l;b.textContent=l=='ru'?'EN':'RU';try{localStorage.setItem('l',l)}catch(e){}}
+try{var v=localStorage.getItem('l');if(v)s(v);else if(!/^ru|^uk|^be|^kk/.test(navigator.language))s('en')}catch(e){}
+b.onclick=function(){s(h.lang=='ru'?'en':'ru')};
+var t=0,c=document.getElementById('tc');
+if(c)setInterval(function(){t++;var f=t%24,x=Math.floor(t/24)%60;c.textContent='00:00:'+(x<10?'0':'')+x+':'+(f<10?'0':'')+f},42);
+var pl=document.querySelector('.pl');
+if(pl)addEventListener('scroll',function(){var r=pl.getBoundingClientRect();pl.style.setProperty('--p',Math.max(0,Math.min(100,(innerHeight*.8-r.top)/(r.height+innerHeight*.3)*100))+'%')});
+</script>
+</body>
+</html>
